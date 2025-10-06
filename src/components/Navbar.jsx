@@ -18,6 +18,8 @@ export default function Navbar(){
           <NavLink to="/services" className={linkClass}>Services</NavLink>
           <NavLink to="/contact" className={linkClass}>Contact</NavLink>
           <NavLink to="/users" className={linkClass}>Users</NavLink>
+          <NavLink to="/auth" className={linkClass}>Login</NavLink>
+
           <ThemeToggle />
         </div>
       </div>

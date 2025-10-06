@@ -8,6 +8,8 @@ import Services from '@/pages/Services.jsx'
 import Contact from '@/pages/Contact.jsx'
 import Users from '@/pages/Users.jsx'
 import NotFound from '@/pages/NotFound.jsx'
+import Login from '@/pages/Login.jsx'; 
+import Auth from '@/pages/Auth.jsx';
 
 export default function App(){
   return (
@@ -21,6 +23,9 @@ export default function App(){
           <Route path="/contact" element={<Contact />} />
           <Route path="/users" element={<Users />} />
           <Route path="*" element={<NotFound />} />
+          <Route path="/auth" element={<Auth />} />
+          <Route path="/login" element={<Auth />} />   {/* optional alias */}
+          <Route path="/signup" element={<Auth />} />  {/* optional alias */}
         </Routes>
       </main>
       <Footer />
