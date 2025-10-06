@@ -17,6 +17,7 @@ export default function Navbar(){
           <NavLink to="/about" className={linkClass}>About</NavLink>
           <NavLink to="/services" className={linkClass}>Services</NavLink>
           <NavLink to="/contact" className={linkClass}>Contact</NavLink>
+          <NavLink to="/users" className={linkClass}>Users</NavLink>
           <ThemeToggle />
         </div>
       </div>
