@@ -74,3 +74,115 @@ h1 { margin: 0; font-size: 40px; line-height: 1.1; }
 .footer-inner { max-width:1080px; margin:0 auto; padding:16px; display:flex; justify-content:space-between; align-items:center; }
 .footer a { color: var(--muted); text-decoration:none; }
 .footer a:hover { color: var(--text); }
+
+/* Reserve space on the right for the Settings trigger */
+.navbar-inner { position: relative; padding-right: 200px; }
+
+/* Right-edge anchor for the Settings button (doesn't affect layout) */
+.settings-anchor {
+  position: absolute;
+  right: 100px;           /* push to screen's right side */
+  top: 50%;
+  transform: translateY(-50%);
+}
+/* --- Sidebar Layout (grid version — keep if still used) --- */
+.side-layout {
+  display: grid;
+  grid-template-columns: 220px 1fr;
+  gap: 16px;
+  min-height: 60vh;
+}
+.side-layout.collapsed {
+  grid-template-columns: 64px 1fr;
+}
+
+/* Sticky/grid sidebar (legacy style) */
+.sidebar {
+  border: 1px solid var(--border);
+  background: var(--panel);
+  border-radius: 12px;
+  padding: 8px;
+  position: sticky;
+  top: 72px; /* below navbar when scrolling */
+  height: fit-content;
+}
+.sidebar.collapsed .side-label,
+.sidebar.collapsed .side-title { display: none; }
+
+/* --- Fixed, screen-anchored sidebar (NEW) --- */
+/* Use this when you want the bar pinned to the left edge of the screen */
+:root {
+  --nav-h: 72px;          /* header height; tweak if your navbar is taller/shorter */
+  --sidebar-w: 220px;
+  --sidebar-w-collapsed: 64px;
+}
+
+.sidebar.sidebar-fixed {
+  position: fixed;
+  left: 0;
+  top: var(--nav-h);                      /* starts right under the header */
+  height: calc(100vh - var(--nav-h));     /* runs to bottom of viewport */
+  width: var(--sidebar-w);
+  background: var(--panel);
+  padding: 8px;
+  border-right: 1px solid var(--border);  /* vertical divider */
+  border-top: none; border-bottom: none; border-left: none;
+  border-radius: 0 12px 12px 0;           /* rounded right edge only */
+  z-index: 1000;                          /* above content */
+}
+/* collapsed width */
+.sidebar.sidebar-fixed.collapsed { width: var(--sidebar-w-collapsed); }
+/* hide labels/titles when collapsed */
+.sidebar.sidebar-fixed.collapsed .side-label,
+.sidebar.sidebar-fixed.collapsed .side-title { display: none; }
+
+/* Header & items (shared) */
+.side-header {
+  display: flex; align-items: center; justify-content: space-between;
+  margin-bottom: 8px;
+}
+.side-title { font-weight: 700; color: var(--text); }
+.side-toggle {
+  border: 1px solid var(--border);
+  background: var(--panel);
+  color: var(--text);
+  border-radius: 8px;
+  padding: 4px 8px;
+  cursor: pointer;
+}
+.side-nav { display: grid; gap: 6px; }
+
+.side-item {
+  display: flex; align-items: center; gap: 10px;
+  text-decoration: none;
+  color: var(--muted);
+  padding: 8px 10px;
+  border-radius: 10px;
+  border: 1px solid transparent;
+}
+.side-item:hover { color: var(--text); background: rgba(99,102,241,0.08); }
+.side-item.active { color: var(--text); border-color: var(--border); background: rgba(99,102,241,0.12); }
+
+.side-icon {
+  width: 28px; height: 28px;
+  display: inline-grid; place-items: center;
+  border-radius: 8px;
+  font-weight: 800; font-size: 12px;
+  color: #fff;
+  background: linear-gradient(135deg, var(--brand), var(--accent));
+}
+
+/* --- Content offset when using the fixed sidebar (NEW) --- */
+/* Apply this class to the main area on pages that use the fixed sidebar */
+.side-main-fixed {
+  padding-left: calc(var(--sidebar-w) + 16px); /* leave space for sidebar + a small gap */
+  padding-top: 12px;
+}
+/* When collapsed (you can toggle a class on <body> or the main wrapper if you prefer) */
+.sidebar.sidebar-fixed.collapsed ~ .side-main-fixed,
+.side-layout.collapsed .side-main-fixed { /* optional fallback */
+  padding-left: calc(var(--sidebar-w-collapsed) + 16px);
+}
+
+/* Optional: page heading nicety */
+.page-wrap > h1 { margin-top: 0; }

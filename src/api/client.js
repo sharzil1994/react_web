@@ -11,6 +11,9 @@ const DEFAULT_CREATE_USER_PATH =
 const LOGOUT_PATH =
   (import.meta.env.VITE_LOGOUT_PATH?.trim()) || ''; // optional
 
+const DEFAULT_WALLET_ME_PATH =
+  (import.meta.env.VITE_WALLET_ME_PATH?.trim()) || "/api/wallet/me";
+
 function isAbsolute(u) { return /^https?:\/\//i.test(u); }
 
 export const tokenStorage = {
@@ -70,4 +73,33 @@ export async function logout() {
   } finally {
     tokenStorage.clear();
   }
+}
+export async function doGlobalLogout() {
+  // call server logout (if VITE_LOGOUT_PATH is set) and always clear token
+  await logout();
+
+  // tell the whole app "auth changed" + ask screens to reset UI
+  window.dispatchEvent(new CustomEvent('auth:changed', { detail: { isAuthed: false } }));
+  window.dispatchEvent(new Event('auth:reset'));
+}
+
+export async function fetchWalletMe() {
+  const rel = DEFAULT_WALLET_ME_PATH.startsWith("/")
+    ? DEFAULT_WALLET_ME_PATH
+    : `/${DEFAULT_WALLET_ME_PATH}`;
+  const url = isAbsolute(rel) ? rel : `${API_BASE}${rel}`;
+
+  const token = tokenStorage.get();
+  const headers = token ? { Authorization: `Bearer ${token}` } : undefined;
+
+  const res = await fetch(url, { headers });
+  const text = await res.text();
+  let data; try { data = JSON.parse(text); } catch { data = text; }
+
+  if (!res.ok) {
+    const err = new Error(`HTTP ${res.status} ${res.statusText}`);
+    err.data = data;
+    throw err;
+  }
+  return data; // expect { balance: ... } or similar
 }
