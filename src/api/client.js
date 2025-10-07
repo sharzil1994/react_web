@@ -14,7 +14,24 @@ const LOGOUT_PATH =
 const DEFAULT_WALLET_ME_PATH =
   (import.meta.env.VITE_WALLET_ME_PATH?.trim()) || "/api/wallet/me";
 
+
+const DEFAULT_FEATURE_X_PATH =
+  (import.meta.env.VITE_FEATURE_X_PATH?.trim()) || '/api/feature-x';
+const DEFAULT_FEATURE_Y_PATH =
+  (import.meta.env.VITE_FEATURE_Y_PATH?.trim()) || '/api/feature-y';
+
+
+
+
 function isAbsolute(u) { return /^https?:\/\//i.test(u); }
+
+
+export async function callFeatureX(payload, endpointOverride){
+  return postJsonTo(endpointOverride?.trim() || DEFAULT_FEATURE_X_PATH, payload);
+}
+export async function callFeatureY(payload, endpointOverride){
+  return postJsonTo(endpointOverride?.trim() || DEFAULT_FEATURE_Y_PATH, payload);
+}
 
 export const tokenStorage = {
   get()   { return localStorage.getItem('authToken') || ''; },
@@ -22,14 +39,13 @@ export const tokenStorage = {
   clear() { localStorage.removeItem('authToken'); }
 };
 
-async function postJson(pathOrUrl, body) {
+async function postJsonTo(pathOrUrl, body){
   const rel = pathOrUrl.startsWith('/') ? pathOrUrl : `/${pathOrUrl}`;
   const url = isAbsolute(rel) ? rel : `${API_BASE}${rel}`;
-  const res = await fetch(url, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(body),
-  });
+  const token = localStorage.getItem('authToken') || '';
+  const headers = { 'Content-Type': 'application/json' };
+  if (token) headers['Authorization'] = `Bearer ${token}`;
+  const res = await fetch(url, { method:'POST', headers, body: JSON.stringify(body) });
   const text = await res.text();
   let data; try { data = JSON.parse(text) } catch { data = text; }
   if (!res.ok) { const err = new Error(`HTTP ${res.status} ${res.statusText}`); err.data = data; throw err; }
@@ -82,7 +98,6 @@ export async function doGlobalLogout() {
   window.dispatchEvent(new CustomEvent('auth:changed', { detail: { isAuthed: false } }));
   window.dispatchEvent(new Event('auth:reset'));
 }
-
 export async function fetchWalletMe() {
   const rel = DEFAULT_WALLET_ME_PATH.startsWith("/")
     ? DEFAULT_WALLET_ME_PATH
@@ -90,16 +105,17 @@ export async function fetchWalletMe() {
   const url = isAbsolute(rel) ? rel : `${API_BASE}${rel}`;
 
   const token = tokenStorage.get();
-  const headers = token ? { Authorization: `Bearer ${token}` } : undefined;
+  const headers = { Accept: "application/json" };
+  if (token) headers.Authorization = `Bearer ${token}`;
 
   const res = await fetch(url, { headers });
+  const ct = res.headers.get("content-type") || "";
   const text = await res.text();
-  let data; try { data = JSON.parse(text); } catch { data = text; }
 
-  if (!res.ok) {
-    const err = new Error(`HTTP ${res.status} ${res.statusText}`);
-    err.data = data;
+  if (!res.ok || !ct.includes("application/json")) {
+    const err = new Error(`HTTP ${res.status} ${res.statusText || ""}`.trim());
+    err.data = text; // avoid wiping last good value on HTML/login pages
     throw err;
   }
-  return data; // expect { balance: ... } or similar
+  return JSON.parse(text);
 }

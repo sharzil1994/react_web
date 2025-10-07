@@ -14,6 +14,10 @@ import MyPage from '@/pages/MyPage.jsx' // landing content inside MyPage
 import MyPageLayout from '@/layouts/MyPageLayout.jsx'
 import ConsoleServicesPage from '@/pages/ConsoleServicesPage.jsx'
 import ConsoleResultsPage  from '@/pages/ConsoleResultsPage.jsx'
+import FeatureXPage from '@/pages/FeatureXPage.jsx';
+import FeatureYPage from '@/pages/FeatureYPage.jsx';
+
+
 
 export default function App(){
   return (
@@ -36,7 +40,8 @@ export default function App(){
             {/* /mypage -> your existing MyPage.jsx */}
             <Route index element={<MyPage />} />
             {/* /mypage/services and /mypage/results show next to the sidebar */}
-            <Route path="services" element={<ConsoleServicesPage />} />
+            <Route path="services/feature-x" element={<FeatureXPage />} />
+            <Route path="services/feature-y" element={<FeatureYPage />} />
             <Route path="results"  element={<ConsoleResultsPage  />} />
           </Route>
 
