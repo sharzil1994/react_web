@@ -117,6 +117,7 @@ export default function BalancePanel() {
 
     const onVis = () => { if (!document.hidden) loadOnce(); };
     const onResize = () => computePosition();
+    const onWallet = () => loadOnce?.();
     const onAuth = (e) => {
       if (e?.detail?.isAuthed) startLoop();      // restart when logging in
       else {
@@ -128,6 +129,7 @@ export default function BalancePanel() {
       }
       setTimeout(computePosition, 0);
     };
+    
 
     document.addEventListener("visibilitychange", onVis);
     window.addEventListener("resize", onResize);

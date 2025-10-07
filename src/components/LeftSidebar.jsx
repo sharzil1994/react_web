@@ -101,13 +101,13 @@ export default function LeftSidebar({ collapsed, onToggle, fixed = false, top = 
         </nav>
       </aside>
 
-      {/* Flyout menu to the RIGHT of Services row */}
-      {open && (
+        {/* Flyout to the right of Services */}
+        {open && (
         <div
-          ref={panelRef} // ✅ keep clicks inside from closing the menu
-          role="menu"
-          className="side-flyout"
-          style={{
+            ref={panelRef}
+            role="menu"
+            className="side-flyout"
+            style={{
             position: "fixed",
             top: flyPos.top,
             left: flyPos.left,
@@ -118,25 +118,25 @@ export default function LeftSidebar({ collapsed, onToggle, fixed = false, top = 
             boxShadow: "0 8px 28px rgba(0,0,0,.22)",
             zIndex: 1100,
             overflow: "hidden",
-          }}
+            }}
         >
-          <NavLink
+            <NavLink
             to="/mypage/services/feature-x"
             className="fly-item"
             onClick={() => setOpen(false)}
-          >
+            >
             Use Feature X
-          </NavLink>
+            </NavLink>
 
-          <NavLink
-            to="/mypage/services/feature-y"
+            <NavLink
+            to="/mypage/services/puresnet"
             className="fly-item"
             onClick={() => setOpen(false)}
-          >
-            Use Feature Y
-          </NavLink>
+            >
+            PureSNet
+            </NavLink>
         </div>
-      )}
+        )}
     </>
   );
 }

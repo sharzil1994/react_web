@@ -16,7 +16,7 @@ import ConsoleServicesPage from '@/pages/ConsoleServicesPage.jsx'
 import ConsoleResultsPage  from '@/pages/ConsoleResultsPage.jsx'
 import FeatureXPage from '@/pages/FeatureXPage.jsx';
 import FeatureYPage from '@/pages/FeatureYPage.jsx';
-
+import PuresnetPage   from '@/pages/PuresnetPage.jsx';
 
 
 export default function App(){
@@ -42,6 +42,7 @@ export default function App(){
             {/* /mypage/services and /mypage/results show next to the sidebar */}
             <Route path="services/feature-x" element={<FeatureXPage />} />
             <Route path="services/feature-y" element={<FeatureYPage />} />
+            <Route path="services/puresnet"  element={<PuresnetPage />} />
             <Route path="results"  element={<ConsoleResultsPage  />} />
           </Route>
 

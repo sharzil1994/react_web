@@ -17,9 +17,13 @@ const DEFAULT_WALLET_ME_PATH =
 
 const DEFAULT_FEATURE_X_PATH =
   (import.meta.env.VITE_FEATURE_X_PATH?.trim()) || '/api/feature-x';
+
+
 const DEFAULT_FEATURE_Y_PATH =
   (import.meta.env.VITE_FEATURE_Y_PATH?.trim()) || '/api/feature-y';
 
+const DEFAULT_PURESNET_PATH =
+  (import.meta.env.VITE_PURESNET_PATH?.trim()) || '/api/puresnet';
 
 
 
@@ -38,6 +42,10 @@ export const tokenStorage = {
   set(t)  { if (t) localStorage.setItem('authToken', t); },
   clear() { localStorage.removeItem('authToken'); }
 };
+
+export async function callPuresnet(payload, endpointOverride) {
+  return postJsonTo(endpointOverride?.trim() || DEFAULT_PURESNET_PATH, payload);
+}
 
 async function postJsonTo(pathOrUrl, body){
   const rel = pathOrUrl.startsWith('/') ? pathOrUrl : `/${pathOrUrl}`;
@@ -119,3 +127,5 @@ export async function fetchWalletMe() {
   }
   return JSON.parse(text);
 }
+
+

@@ -1,23 +1,22 @@
 import React, { useState } from "react";
-import { callFeatureX } from "@/api/client"; // use "../api/client" if you don't have '@'
+import { callPuresnet } from "@/api/client";
 
-export default function FeatureXPage() {
-  const [reason, setReason]   = useState("");
+export default function PuresnetPage() {
+  const [input, setInput]     = useState("");       // change label to what your API expects
   const [loading, setLoading] = useState(false);
   const [res, setRes]         = useState(null);
   const [err, setErr]         = useState("");
 
-  async function useFeatureX(e){
+  async function usePuresnet(e){
     e.preventDefault();
     setErr(""); setRes(null);
     try {
       setLoading(true);
-      // Shape your backend expects. Common: { reason?: string }
-      const payload = reason ? { reason } : {};
-      const data = await callFeatureX(payload);
+      // Common: { input: string } — adjust to your Swagger if needed
+      const payload = { input };
+      const data = await callPuresnet(payload);
       setRes(data);
-      // Optional: ask Balance panel to refresh immediately
-      window.dispatchEvent(new Event("wallet:changed"));
+      window.dispatchEvent(new Event("wallet:changed")); // refresh balance if it changes
     } catch (e) {
       setErr(e?.message || "Request failed");
     } finally {
@@ -27,20 +26,20 @@ export default function FeatureXPage() {
 
   return (
     <div className="page-wrap">
-      <h1>Features</h1>
-      <p className="subtitle">Use Feature X to spend from your balance.</p>
+      <h1>PureSNet</h1>
+      <p className="subtitle">Run the PureSNet feature.</p>
 
-      <form className="card" onSubmit={useFeatureX} style={{ display:"grid", gap:12 }}>
-        <label>Reason (optional)</label>
+      <form className="card" onSubmit={usePuresnet} style={{ display:"grid", gap:12 }}>
+        <label>Input</label>
         <input
           className="btn"
           style={{ padding: 10 }}
-          placeholder="Enter reason for spending"
-          value={reason}
-          onChange={(e)=>setReason(e.target.value)}
+          placeholder="Enter input"
+          value={input}
+          onChange={(e)=>setInput(e.target.value)}
         />
         <button className="btn primary" type="submit" disabled={loading}>
-          {loading ? "Using…" : "Use Feature X"}
+          {loading ? "Running…" : "Run PureSNet"}
         </button>
       </form>
 
