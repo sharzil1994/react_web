@@ -17,6 +17,7 @@ import ConsoleResultsPage  from '@/pages/ConsoleResultsPage.jsx'
 import FeatureXPage from '@/pages/FeatureXPage.jsx';
 import FeatureYPage from '@/pages/FeatureYPage.jsx';
 import PuresnetPage   from '@/pages/PuresnetPage.jsx';
+import CheckoutPage from '@/pages/CheckoutPage.jsx';
 
 
 export default function App(){
@@ -29,7 +30,7 @@ export default function App(){
           <Route path="/about" element={<About />} />
           <Route path="/services" element={<Services />} />
           <Route path="/contact" element={<Contact />} />
-
+          <Route path="/checkout" element={<CheckoutPage />} />
           {/* Auth aliases */}
           <Route path="/auth" element={<Auth />} />
           <Route path="/login" element={<Auth />} />

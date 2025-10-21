@@ -37,7 +37,7 @@ export default function Navbar() {
       <div className="navbar-inner">
         <Link to="/" className="brand">
           <span className="logo" aria-hidden="true"></span>
-          <span>HelloWorld</span>
+          <span>JY Bio</span>
         </Link>
 
         <div className="nav-links">

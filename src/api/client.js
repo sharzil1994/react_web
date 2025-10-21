@@ -27,7 +27,71 @@ const DEFAULT_PURESNET_PATH =
 
 
 
+const DEFAULT_PAYPAL_CREATE_PATH =
+  (import.meta.env.VITE_PAYPAL_CREATE_PATH?.trim()) || "/api/paypal/create-order";
+const DEFAULT_PAYPAL_CAPTURE_PATH =
+  (import.meta.env.VITE_PAYPAL_CAPTURE_PATH?.trim()) || "/api/paypal/capture-order";
+const DEFAULT_PAYPAL_PAGE_PATH =
+  (import.meta.env.VITE_PAYPAL_PAGE_PATH?.trim())   || "/api/paypal";
+
+
+  
+
 function isAbsolute(u) { return /^https?:\/\//i.test(u); }
+
+
+
+
+function extractFilenameFromCD(cd) {
+  if (!cd) return null;
+  // filename*=UTF-8''5urv.pdb OR filename="5urv.pdb"
+  const m = /filename\*=UTF-8''([^;]+)|filename="?([^\";]+)"?/i.exec(cd);
+  const raw = m?.[1] || m?.[2];
+  try { return raw ? decodeURIComponent(raw) : null; } catch { return raw || null; }
+}
+
+export async function callPuresnetDownload(payload, endpointOverride) {
+  const path = endpointOverride?.trim() || DEFAULT_PURESNET_PATH;
+  const rel  = path.startsWith('/') ? path : `/${path}`;
+  const url  = isAbsolute(rel) ? rel : `${API_BASE}${rel}`;
+
+  const token = tokenStorage.get?.() || localStorage.getItem('authToken') || '';
+  const headers = {
+    'Content-Type': 'application/json',
+    'Accept': 'application/octet-stream, chemical/x-pdb, */*',
+  };
+  if (token) headers.Authorization = `Bearer ${token}`;
+
+  const res = await fetch(url, { method: 'POST', headers, body: JSON.stringify(payload) });
+
+  const ct = res.headers.get('content-type') || '';
+  const cd = res.headers.get('content-disposition') || '';
+
+  // If server returned JSON (error/details), surface it
+  if (!res.ok || ct.includes('application/json')) {
+    const text = await res.text();
+    let data;
+    try { data = JSON.parse(text); } catch { data = text; }
+    const err = new Error(`HTTP ${res.status} ${res.statusText || ''}`.trim());
+    err.data = data;
+    throw err;
+  }
+
+  // Expect a binary PDB (chemical/x-pdb or octet-stream)
+  const blob = await res.blob();
+  const filename = extractFilenameFromCD(cd) || 'puresnet.pdb';
+
+  // expose any useful headers (e.g., x-balance)
+  const meta = {
+    filename,
+    contentType: ct,
+    balance: res.headers.get('x-balance'),
+    refId:   res.headers.get('x-ref-id'),
+  };
+
+  return { blob, meta };
+}
+
 
 
 export async function callFeatureX(payload, endpointOverride){
@@ -43,22 +107,33 @@ export const tokenStorage = {
   clear() { localStorage.removeItem('authToken'); }
 };
 
-export async function callPuresnet(payload, endpointOverride) {
-  return postJsonTo(endpointOverride?.trim() || DEFAULT_PURESNET_PATH, payload);
+export async function createPaypalOrder(payload, endpointOverride) {
+  return postJsonTo(endpointOverride?.trim() || DEFAULT_PAYPAL_CREATE_PATH, payload);
 }
+export async function capturePaypalOrder(orderID, endpointOverride) {
+  // server expects { orderID }
+  return postJsonTo(endpointOverride?.trim() || DEFAULT_PAYPAL_CAPTURE_PATH, { orderID });
+}
+
+
 
 async function postJsonTo(pathOrUrl, body){
   const rel = pathOrUrl.startsWith('/') ? pathOrUrl : `/${pathOrUrl}`;
-  const url = isAbsolute(rel) ? rel : `${API_BASE}${rel}`;
-  const token = localStorage.getItem('authToken') || '';
+  const url = /^https?:\/\//i.test(rel) ? rel : `${API_BASE}${rel}`;
+  const token = tokenStorage.get();
   const headers = { 'Content-Type': 'application/json' };
-  if (token) headers['Authorization'] = `Bearer ${token}`;
+  if (token) headers.Authorization = `Bearer ${token}`;
   const res = await fetch(url, { method:'POST', headers, body: JSON.stringify(body) });
   const text = await res.text();
   let data; try { data = JSON.parse(text) } catch { data = text; }
   if (!res.ok) { const err = new Error(`HTTP ${res.status} ${res.statusText}`); err.data = data; throw err; }
   return data;
 }
+
+export async function callPuresnet(payload, endpointOverride) {
+  return postJsonTo(endpointOverride?.trim() || DEFAULT_PURESNET_PATH, payload);
+}
+
 
 // login as form-url-encoded (FastAPI/OAuth style)
 export async function login(payload, endpointOverride) {
@@ -79,7 +154,7 @@ export async function login(payload, endpointOverride) {
 
 // sign-up stays JSON
 export async function createUser(payload, endpointOverride) {
-  return postJson(endpointOverride?.trim() || DEFAULT_CREATE_USER_PATH, payload);
+  return postJsonTo(endpointOverride?.trim() || DEFAULT_CREATE_USER_PATH, payload);
 }
 
 // optional server logout; always clears local token
@@ -129,3 +204,39 @@ export async function fetchWalletMe() {
 }
 
 
+// GET helper for the "paypal_page" endpoint.
+// Expected shapes: { approval_url: "..." } or { url: "..." } or plain text url.
+export async function getPaypalPage(endpointOverride) {
+  const path = endpointOverride?.trim() || DEFAULT_PAYPAL_PAGE_PATH;
+  const rel = path.startsWith("/") ? path : `/${path}`;
+  const url = /^https?:\/\//i.test(rel) ? rel : `${API_BASE}${rel}`;
+
+  const token = tokenStorage.get();
+  const headers = { Accept: "application/json" };
+  if (token) headers.Authorization = `Bearer ${token}`;
+
+  const res  = await fetch(url, { headers });
+  const ct   = res.headers.get("content-type") || "";
+  const text = await res.text();
+
+  if (!res.ok) {
+    const err = new Error(`HTTP ${res.status} ${res.statusText || ""}`.trim());
+    err.data = text; throw err;
+  }
+
+  if (ct.includes("application/json")) {
+    try {
+      const data = JSON.parse(text);
+      // common shapes
+      return (
+        data?.approval_url ||
+        data?.url ||
+        data?.redirect ||
+        data?.href ||
+        null
+      );
+    } catch { /* fall through */ }
+  }
+  // plain text url fallback
+  return /^https?:\/\//i.test(text.trim()) ? text.trim() : null;
+}

@@ -1,24 +1,27 @@
 // src/components/SettingsMenu.jsx
 import React, { useEffect, useLayoutEffect, useRef, useState } from "react";
+import { getPaypalPage } from "@/api/client"; // ✅ new import to fetch approval URL
 
 /**
  * SettingsMenu
- * - Renders a fixed-position vertical panel at the RIGHT edge of the viewport
- * - Does NOT affect header layout (no reflow)
+ * - Fixed panel at right edge (does not reflow header)
  * - Closes on outside click / Esc
- * - First 3 items: no-op; Last item: calls onLogout()
+ * - Adds "Pay with PayPal" which redirects to backend-provided approval URL
  */
 export default function SettingsMenu({ onLogout }) {
   const [open, setOpen] = useState(false);
-  const [panelTop, setPanelTop] = useState(60); // pixels from top of page
+  const [panelTop, setPanelTop] = useState(60);
+  const [payBusy, setPayBusy] = useState(false);
+  const [payErr, setPayErr] = useState("");
+
   const btnRef = useRef(null);
   const panelRef = useRef(null);
 
-  // Compute a stable top position just under the navbar (or button) on open
+  // Compute a stable top position just under the navbar on open
   useLayoutEffect(() => {
     if (!open) return;
     let top = 60;
-    const nav = document.querySelector(".navbar"); // your existing class
+    const nav = document.querySelector(".navbar");
     if (nav) {
       const r = nav.getBoundingClientRect();
       top = r.bottom + window.scrollY + 8;
@@ -49,7 +52,23 @@ export default function SettingsMenu({ onLogout }) {
     };
   }, []);
 
-  // No-op menu actions
+  async function gotoPaypal() {
+    try {
+      setPayErr("");
+      setPayBusy(true);
+      // Ask backend for approval URL, then redirect
+      const url = await getPaypalPage();
+      if (!url) throw new Error("No approval URL returned from server.");
+      // close menu and navigate
+      setOpen(false);
+      window.location.href = url;
+    } catch (e) {
+      setPayErr(e?.message || "Failed to open PayPal");
+    } finally {
+      setPayBusy(false);
+    }
+  }
+
   const noop = (e) => {
     e.preventDefault();
     setOpen(false);
@@ -78,8 +97,8 @@ export default function SettingsMenu({ onLogout }) {
           style={{
             position: "fixed",
             top: panelTop,
-            right: 16,            // stick to rightmost; tweak if you want 0
-            width: 200,
+            right: 16,
+            width: 220,
             background: "var(--panel)",
             border: "1px solid var(--border)",
             borderRadius: 12,
@@ -88,6 +107,19 @@ export default function SettingsMenu({ onLogout }) {
             overflow: "hidden",
           }}
         >
+          {/* New: PayPal button */}
+          <MenuItem
+            label={payBusy ? "Opening PayPal…" : "Pay with PayPal"}
+            onClick={gotoPaypal}
+          />
+          {/* Optional error line */}
+          {payErr && (
+            <div style={{ padding: "8px 12px", color: "#fca5a5", borderTop: "1px solid var(--border)" }}>
+              {payErr}
+            </div>
+          )}
+
+          {/* Existing items */}
           <MenuItem onClick={noop} label="Profile" />
           <MenuItem onClick={noop} label="Preferences" />
           <MenuItem onClick={noop} label="Billing" />
