@@ -90,9 +90,22 @@ export async function callFeatureY(payload, endpointOverride){
 }
 
 export const tokenStorage = {
-  get()   { return localStorage.getItem('authToken') || ''; },
-  set(t)  { if (t) localStorage.setItem('authToken', t); },
-  clear() { localStorage.removeItem('authToken'); }
+  get() {
+    return (
+      localStorage.getItem('authToken') ||
+      localStorage.getItem('access_token') ||
+      ''
+    );
+  },
+  set(t) {
+    if (!t) return;
+    localStorage.setItem('authToken', t);
+    localStorage.setItem('access_token', t);
+  },
+  clear() {
+    localStorage.removeItem('authToken');
+    localStorage.removeItem('access_token');
+  }
 };
 
 export async function createPaypalOrder(payload, endpointOverride) {
@@ -189,6 +202,28 @@ export async function fetchWalletMe() {
     throw err;
   }
   return JSON.parse(text);
+}
+
+const DEFAULT_AUTH_PROBE_PATH =
+  (import.meta.env.VITE_AUTH_PROBE_PATH?.trim()) || DEFAULT_WALLET_ME_PATH;
+export async function probeAuth() {
+  try {
+    const rel = DEFAULT_AUTH_PROBE_PATH.startsWith("/")
+      ? DEFAULT_AUTH_PROBE_PATH
+      : `/${DEFAULT_AUTH_PROBE_PATH}`;
+    const url = isAbsolute(rel) ? rel : `${API_BASE}${rel}`;
+    const token = tokenStorage.get();
+    const headers = { Accept: "application/json" };
+    if (token) headers.Authorization = `Bearer ${token}`;
+    const res = await fetch(url, { headers });
+    if (!res.ok) return false;                    // 401/403/etc → not authed
+    const ct = res.headers.get("content-type") || "";
+    if (!ct.includes("application/json")) return false;
+    // Optionally inspect body if you want (not needed)
+    return true;
+  } catch {
+    return false;
+  }
 }
 
 

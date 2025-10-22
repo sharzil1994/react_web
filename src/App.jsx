@@ -19,6 +19,10 @@ import PuresnetPage   from '@/pages/PuresnetPage.jsx';
 import CheckoutPage from '@/pages/CheckoutPage.jsx';
 import PaypalPage from '@/pages/PaypalPage.jsx';
 
+// Guard
+import RequireAuth from '@/routes/RequireAuth.jsx'
+
+
 export default function App(){
   return (
     <div className="app" data-theme={localStorage.getItem('theme') || 'light'}>
@@ -36,13 +40,15 @@ export default function App(){
           <Route path="/signup" element={<Auth />} />
 
           {/* ✅ MyPage uses a layout so the sidebar/persistent parts show only here */}
-          <Route path="/mypage" element={<MyPageLayout />}>
-            {/* /mypage -> your existing MyPage.jsx */}
-            <Route index element={<MyPage />} />
-            {/* /mypage/services and /mypage/results show next to the sidebar */}
-            <Route path="services/feature-x" element={<FeatureXPage />} />
-            <Route path="services/puresnet"  element={<PuresnetPage />} />
-            <Route path="results"  element={<ConsoleResultsPage  />} />
+          <Route element={<RequireAuth />}>
+            <Route path="/mypage" element={<MyPageLayout />}>
+              {/* /mypage -> your existing MyPage.jsx */}
+              <Route index element={<MyPage />} />
+              {/* /mypage/services and /mypage/results show next to the sidebar */}
+              <Route path="services/feature-x" element={<FeatureXPage />} />
+              <Route path="services/puresnet"  element={<PuresnetPage />} />
+              <Route path="results"  element={<ConsoleResultsPage  />} />
+            </Route>
           </Route>
 
           {/* Catch-all */}

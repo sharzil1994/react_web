@@ -1,7 +1,8 @@
 import React, { useEffect, useState } from "react";
 import ThemeToggle from "./ThemeToggle.jsx";
 import SettingsMenu from "./SettingsMenu.jsx";
-import { doGlobalLogout } from "@/api/client"; // or "../api/client" if no alias
+// import { doGlobalLogout } from "@/api/client"; // or "../api/client" if no alias
+import { doGlobalLogout, probeAuth, tokenStorage } from "@/api/client";
 import { NavLink, Link, useNavigate } from "react-router-dom";
 import BalancePanel from "./BalancePanel.jsx";
 
@@ -9,20 +10,48 @@ const linkClass = ({ isActive }) => "nav-link" + (isActive ? " active" : "");
 
 export default function Navbar() {
   const navigate = useNavigate();
-  const [isAuthed, setIsAuthed] = useState(!!localStorage.getItem("authToken"));
-  
+  // const [isAuthed, setIsAuthed] = useState(!!localStorage.getItem("authToken"));
+  const [isAuthed, setIsAuthed] = useState(!!tokenStorage.get());
 
 
   // Keep navbar in sync with login/logout anywhere in the app
   useEffect(() => {
-    const update = () => setIsAuthed(!!localStorage.getItem("authToken"));
+    // const update = () => setIsAuthed(!!localStorage.getItem("authToken"));
+    async function check() {
+      // If there is no token at all, we are definitely logged out
+      if (!tokenStorage.get()) { setIsAuthed(false); return; }
+      // Probe server to confirm the token is valid
+      const ok = await probeAuth();
+      if (!ok) {
+        await doGlobalLogout();           // clear tokens + broadcast events
+        setIsAuthed(false);
+      } else {
+        setIsAuthed(true);
+      }
+    }
+
+    const update = () => setIsAuthed(!!tokenStorage.get());
+
     const onCustom  = () => update();
-    const onStorage = (e) => { if (!e || e.key === "authToken") update(); };
+    // const onStorage = (e) => { if (!e || e.key === "authToken") update(); };
+    const onStorage = (e) => {
+      if (!e || e.key === "authToken" || e.key === "access_token") update();
+    };
+    const onVisible = () => { if (!document.hidden) check(); };
+
+
+    // window.addEventListener("auth:changed", onCustom);
+    // window.addEventListener("storage", onStorage);
+    check();
     window.addEventListener("auth:changed", onCustom);
     window.addEventListener("storage", onStorage);
+    document.addEventListener("visibilitychange", onVisible);
+
+
     return () => {
       window.removeEventListener("auth:changed", onCustom);
       window.removeEventListener("storage", onStorage);
+      document.removeEventListener("visibilitychange", onVisible);
     };
   }, []);
 
@@ -41,8 +70,8 @@ export default function Navbar() {
         </Link>
 
         <div className="nav-links">
-          <NavLink to="/" className={linkClass} end>Home</NavLink>
-          <NavLink to="/about" className={linkClass}>About</NavLink>
+          {/* <NavLink to="/" className={linkClass} end>Home</NavLink> */}
+          {/* <NavLink to="/about" className={linkClass}>About</NavLink> */}
           {/* <NavLink to="/services" className={linkClass}>Services</NavLink> */}
           <NavLink to="/contact" className={linkClass}>Contact</NavLink>
           {/* <NavLink to="/users" className={linkClass}>Users</NavLink> */}
