@@ -14,10 +14,8 @@ const LOGOUT_PATH =
 const DEFAULT_WALLET_ME_PATH =
   (import.meta.env.VITE_WALLET_ME_PATH?.trim()) || "/api/wallet/me";
 
-
 const DEFAULT_FEATURE_X_PATH =
   (import.meta.env.VITE_FEATURE_X_PATH?.trim()) || '/api/feature-x';
-
 
 const DEFAULT_FEATURE_Y_PATH =
   (import.meta.env.VITE_FEATURE_Y_PATH?.trim()) || '/api/feature-y';
@@ -25,22 +23,14 @@ const DEFAULT_FEATURE_Y_PATH =
 const DEFAULT_PURESNET_PATH =
   (import.meta.env.VITE_PURESNET_PATH?.trim()) || '/api/puresnet';
 
-
-
-const DEFAULT_PAYPAL_CREATE_PATH =
-  (import.meta.env.VITE_PAYPAL_CREATE_PATH?.trim()) || "/api/paypal/create-order";
+// const DEFAULT_PAYPAL_CREATE_PATH =
+//   (import.meta.env.VITE_PAYPAL_CREATE_PATH?.trim()) || "/api/paypal/create-order";
 const DEFAULT_PAYPAL_CAPTURE_PATH =
   (import.meta.env.VITE_PAYPAL_CAPTURE_PATH?.trim()) || "/api/paypal/capture-order";
-const DEFAULT_PAYPAL_PAGE_PATH =
-  (import.meta.env.VITE_PAYPAL_PAGE_PATH?.trim())   || "/api/paypal";
-
-
-  
+// const DEFAULT_PAYPAL_PAGE_PATH =
+//   (import.meta.env.VITE_PAYPAL_PAGE_PATH?.trim())   || "/api/paypal";
 
 function isAbsolute(u) { return /^https?:\/\//i.test(u); }
-
-
-
 
 function extractFilenameFromCD(cd) {
   if (!cd) return null;
@@ -91,8 +81,6 @@ export async function callPuresnetDownload(payload, endpointOverride) {
 
   return { blob, meta };
 }
-
-
 
 export async function callFeatureX(payload, endpointOverride){
   return postJsonTo(endpointOverride?.trim() || DEFAULT_FEATURE_X_PATH, payload);
@@ -205,13 +193,14 @@ export async function fetchWalletMe() {
 
 
 // GET helper for the "paypal_page" endpoint.
-// Expected shapes: { approval_url: "..." } or { url: "..." } or plain text url.
+// GET helper for the "paypal_page" endpoint (robust)
+// Accepts: approval_url, url, redirect, href, or links[] with rel="approve"/"payer-action"
 export async function getPaypalPage(endpointOverride) {
   const path = endpointOverride?.trim() || DEFAULT_PAYPAL_PAGE_PATH;
-  const rel = path.startsWith("/") ? path : `/${path}`;
-  const url = /^https?:\/\//i.test(rel) ? rel : `${API_BASE}${rel}`;
+  const rel  = path.startsWith("/") ? path : `/${path}`;
+  const url  = isAbsolute(rel) ? rel : `${API_BASE}${rel}`;
 
-  const token = tokenStorage.get();
+  const token = tokenStorage.get?.() || localStorage.getItem("authToken") || "";
   const headers = { Accept: "application/json" };
   if (token) headers.Authorization = `Bearer ${token}`;
 
@@ -224,19 +213,37 @@ export async function getPaypalPage(endpointOverride) {
     err.data = text; throw err;
   }
 
+  // Try JSON first
   if (ct.includes("application/json")) {
-    try {
-      const data = JSON.parse(text);
-      // common shapes
-      return (
-        data?.approval_url ||
-        data?.url ||
-        data?.redirect ||
-        data?.href ||
-        null
-      );
-    } catch { /* fall through */ }
+    let data;
+    try { data = JSON.parse(text); } catch { /* fall through */ }
+
+    // direct fields
+    const direct =
+      data?.approval_url || data?.approvalUrl || data?.approvalLink ||
+      data?.url || data?.redirect || data?.href ||
+      data?.data?.approval_url || data?.result?.approval_url || data?.order?.approval_url;
+    if (typeof direct === "string" && /^https?:\/\//i.test(direct)) return direct;
+
+    // look for PayPal v2 links[] rel="approve"/"payer-action"
+    const queue = [data];
+    while (queue.length) {
+      const cur = queue.shift();
+      if (!cur || typeof cur !== "object") continue;
+      if (Array.isArray(cur.links)) {
+        const hit = cur.links.find(
+          (l) => l && typeof l === "object" &&
+                 typeof l.href === "string" &&
+                 l.rel && /approve|payer-action/i.test(String(l.rel))
+        );
+        if (hit?.href) return hit.href;
+      }
+      for (const v of Object.values(cur)) if (v && typeof v === "object") queue.push(v);
+    }
+    return null;
   }
-  // plain text url fallback
-  return /^https?:\/\//i.test(text.trim()) ? text.trim() : null;
+
+  // Plain text fallback (server returns URL as raw text)
+  const trimmed = text.trim();
+  return /^https?:\/\//i.test(trimmed) ? trimmed : null;
 }

@@ -15,10 +15,9 @@ import MyPageLayout from '@/layouts/MyPageLayout.jsx'
 import ConsoleServicesPage from '@/pages/ConsoleServicesPage.jsx'
 import ConsoleResultsPage  from '@/pages/ConsoleResultsPage.jsx'
 import FeatureXPage from '@/pages/FeatureXPage.jsx';
-import FeatureYPage from '@/pages/FeatureYPage.jsx';
 import PuresnetPage   from '@/pages/PuresnetPage.jsx';
 import CheckoutPage from '@/pages/CheckoutPage.jsx';
-
+import PaypalPage from '@/pages/PaypalPage.jsx';
 
 export default function App(){
   return (
@@ -42,12 +41,12 @@ export default function App(){
             <Route index element={<MyPage />} />
             {/* /mypage/services and /mypage/results show next to the sidebar */}
             <Route path="services/feature-x" element={<FeatureXPage />} />
-            <Route path="services/feature-y" element={<FeatureYPage />} />
             <Route path="services/puresnet"  element={<PuresnetPage />} />
             <Route path="results"  element={<ConsoleResultsPage  />} />
           </Route>
 
           {/* Catch-all */}
+          <Route path="/paypal" element={<PaypalPage />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </main>

@@ -43,9 +43,9 @@ export default function Navbar() {
         <div className="nav-links">
           <NavLink to="/" className={linkClass} end>Home</NavLink>
           <NavLink to="/about" className={linkClass}>About</NavLink>
-          <NavLink to="/services" className={linkClass}>Services</NavLink>
+          {/* <NavLink to="/services" className={linkClass}>Services</NavLink> */}
           <NavLink to="/contact" className={linkClass}>Contact</NavLink>
-          <NavLink to="/users" className={linkClass}>Users</NavLink>
+          {/* <NavLink to="/users" className={linkClass}>Users</NavLink> */}
 
           {/* ✅ MyPage appears ONLY when logged in */}
           {isAuthed && <NavLink to="/mypage" className={linkClass}>MyPage</NavLink>}
