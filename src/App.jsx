@@ -25,7 +25,7 @@ import RequireAuth from '@/routes/RequireAuth.jsx'
 
 export default function App(){
   return (
-    <div className="app" data-theme={localStorage.getItem('theme') || 'light'}>
+    <div className="app">
       <Navbar />
       <main className="container">
         <Routes>
