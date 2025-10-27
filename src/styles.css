@@ -17,7 +17,10 @@
   --z-nav: 2147483;     /* super high to beat 3rd-party dropdowns/iframes */
   --z-overlay: 2147484; /* for fixed overlays like Settings/Balance */
 }
+
+/* You had this: hides caret everywhere */
 * { caret-color: transparent; }
+
 * { box-sizing: border-box; }
 html, body, #root { height: 100%; }
 body {
@@ -57,13 +60,25 @@ body {
   width: 28px; height: 28px; border-radius: 8px;
   background: linear-gradient(135deg, var(--brand), var(--accent));
 }
-.nav-links { display: flex; gap: 8px; margin-left: 300px; } /* FIXED: 8px (no extra space) */
+
+/* Keep links next to the logo (not pushed right) */
+.nav-links { display: flex; gap: 8px; margin-left: 300px; }
 .nav-link {
   color: var(--muted); text-decoration: none; padding: 8px 10px;
   border-radius: 8px; border: 1px solid transparent;
 }
 .nav-link:hover { color: var(--text); background: rgba(79,70,229,0.08); }
 .nav-link.active { color: var(--text); border-color: var(--border); background: rgba(79,70,229,0.12); }
+.nav-link.disabled {cursor: default;  pointer-events: none; }
+.nav-link.disabled:hover,
+.nav-link.disabled:focus,
+.nav-link.disabled:active {
+  color: var(--muted);           
+  background: transparent;       
+  border-color: transparent;     
+  text-decoration: none;
+}
+
 
 /* right-edge anchor for Settings + Balance (fixed to viewport) */
 .settings-anchor { position: fixed; right: 12px; top: 10px; z-index: var(--z-overlay); display: flex; gap: 8px; }
@@ -152,12 +167,36 @@ h1 { margin: 0; font-size: clamp(1.5rem, 2.5vw, 2.25rem); line-height: 1.15; }
   display: flex; align-items: center; gap: 10px;
 }
 
+/* ========= CARET & CURSOR FIXES ========= */
+/* Re-enable caret + text cursor ONLY where typing is expected */
+input[type="text"],
+input[type="email"],
+input[type="password"],
+input[type="search"],
+textarea,
+[contenteditable="true"] {
+  caret-color: auto !important;
+  cursor: text !important;
+  -webkit-user-select: text;
+  user-select: text;
+}
+
+/* If inputs use .btn (which sets cursor:pointer), override it here */
+input.btn,
+textarea.btn {
+  cursor: text !important;
+}
+
+/* Normal text should not show I-beam */
+body *:not(input):not(textarea):not([contenteditable="true"]) {
+  cursor: default;
+}
+
 /* ========= RESPONSIVE BREAKPOINTS ========= */
 
 /* <= 1024px: keep content full width; DO NOT hide nav links */
 @media (max-width: 1024px) {
   .container { padding: 16px 12px 32px; }
-  /* (Previously you had .nav-links { display:none } — intentionally removed) */
   .side-main-fixed { padding-left: calc(var(--sidebar-w-sm) + 12px); }
   .sidebar.sidebar-fixed { width: var(--sidebar-w-sm); }
   .settings-anchor { right: 12px; top: 10px; }
@@ -165,33 +204,23 @@ h1 { margin: 0; font-size: clamp(1.5rem, 2.5vw, 2.25rem); line-height: 1.15; }
 
 /* <= 900px: let navbar grow in height and place links under the brand */
 @media (max-width: 900px) {
-  /* Let the first grid row (navbar) auto-size instead of fixed height */
-  .app {
-    grid-template-rows: auto 1fr auto;
-  }
-
-  /* Navbar expands to fit two rows */
+  .app { grid-template-rows: auto 1fr auto; } /* navbar row auto-sizes */
   .navbar {
     height: auto;                 /* instead of height: var(--nav-h) */
     min-height: var(--nav-h);     /* keep a decent minimum */
   }
-
   .navbar-inner {
     flex-wrap: wrap;               /* allow wrapping into multiple lines */
     row-gap: 6px;                  /* slight vertical spacing between rows */
     height: auto;                  /* grow with content */
     padding: 10px 14px;            /* a bit more breathing room */
   }
-
-  /* Brand remains first row; logo size unchanged (28x28) */
   .brand { order: 1; }
-  .brand .logo { width: 28px; height: 28px; }
-
-  /* Links move to second row and are centered */
+  .brand .logo { width: 28px; height: 28px; } /* unchanged */
   .nav-links {
     order: 2;
     width: 100%;
-    margin-left: 0;                /* stop pushing all the way right */
+    margin-left: 0;
     justify-content: center;
     gap: 12px;
     padding-top: 6px;
@@ -203,5 +232,21 @@ h1 { margin: 0; font-size: clamp(1.5rem, 2.5vw, 2.25rem); line-height: 1.15; }
   .navbar-inner { padding: 8px 12px; }
   .brand span { font-size: 1rem; }
   .balance-panel { right: 56px; top: 8px; font-size: 0.9rem; }
-  .side-main-fixed { padding-left: calc(var(--sidebar-w-sm) + 8px); padding-right: 8px); }
+  .side-main-fixed { padding-left: calc(var(--sidebar-w-sm) + 8px); padding-right: 8px; } /* fixed stray ')' */
+}
+
+
+input,
+textarea,
+[contenteditable="true"] {
+  caret-color: auto !important;
+  cursor: text !important;
+  -webkit-user-select: text;
+  user-select: text;
+}
+
+/* If .btn sets cursor:pointer, override it for text fields */
+input.btn,
+textarea.btn {
+  cursor: text !important;
 }
